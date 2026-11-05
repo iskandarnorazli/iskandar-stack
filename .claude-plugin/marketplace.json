@@ -1,0 +1,14 @@
+{
+  "name": "iskandar-stack",
+  "owner": {
+    "name": "Iskandar Norazli"
+  },
+  "plugins": [
+    {
+      "name": "iskandar-stack",
+      "source": "./dist/claude-code",
+      "description": "iskandar-mode on top of pstack, shared task state with a drawn lifecycle, and handoffs between Claude and Antigravity."
+    }
+  ],
+  "description": "Iskandar's agent workflow for Claude and Antigravity, built on pstack."
+}

@@ -1,0 +1,11 @@
+{
+  "name": "iskandar-stack",
+  "version": "0.1.0",
+  "description": "Iskandar's agent workflow for Claude and Antigravity: iskandar-mode on top of pstack, shared task state with a drawn lifecycle, and handoffs between agents.",
+  "author": {
+    "name": "Iskandar Norazli"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/iskandarnorazli/iskandar-stack",
+  "displayName": "iskandar-stack"
+}
