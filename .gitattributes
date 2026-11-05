@@ -1,0 +1,2 @@
+# One line ending everywhere: dist/ is generated with LF and compared byte for byte (build.py --check).
+* text=auto eol=lf
