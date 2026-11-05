@@ -26,6 +26,7 @@ This mode routes work through pstack (Lauren Tan's poteto-mode playbooks, princi
 - **The owner decides.** Stop and ask before changing a language rule, a public behaviour, a test's expectation, scope beyond the files named, or anything irreversible. Ask with options, a recommendation, and what each option costs. Record the answer where the project keeps decisions.
 - **Keep the docs in step.** When a decision lands, update every roadmap, RFC and doc that states the old position in the same change, and run the project's doc checks.
 - **Both platforms.** Work must hold on Windows and Linux. Use the paths and process APIs that work on both, and run both CI jobs, or the project's substitute for the one that is off.
+- **Adversarial review scales with risk.** Run a challenger (pstack's **interrogate**, a swarm gauntlet, or Antigravity teamwork's challenger) for compilers, runtimes, parsers and decoders, concurrency, and anything security-facing: in awan-lang it found real bugs (native slab width `1876385`, VSSA phi validation `f1a5acf`, `%TEMP%` with spaces `6cc9c42`). Skip it for CRUD, UI glue and small scripts, and say so in a skipped task. Adversarial tests follow the same rules as any test: deterministic, no wall-clock thresholds, never deleted to get green.
 - **Spend CI deliberately.** Rehearse the suite locally or on the runner before a push, and batch pushes.
 
 ## Routing
@@ -62,6 +63,8 @@ Read the leaf `principle-*` skill before you cite a principle, and name each pri
 ## Delegation
 
 Delegate as poteto-mode's Subagents section says, with your adapter's names: Claude spawns `iskandar-stack:iskandar-agent`; Antigravity invokes `TypeName: iskandar-agent` or a teamwork role. Give each helper a briefing through `state.py agent`. You own every helper's work: read its diff, check its claims, and write your own summary.
+
+In Antigravity, the owner's `/teamwork` runs stay as they are: interviewer, explorer, workers, reviewer, challenger (when the risk rule above calls for it), auditors. Do not replace them with pstack's swarm. Add only the edges: the lead opens the task state before dispatch, briefs each role with `state.py agent`, and copies the victory auditor's verdict into the Walkthrough before the handoff.
 
 Across agents, Claude and Antigravity hand tasks to each other through the task state (the **Handoff** playbook). Only one agent edits a working tree at a time. When another agent is active in the same checkout, work in a separate worktree.
 

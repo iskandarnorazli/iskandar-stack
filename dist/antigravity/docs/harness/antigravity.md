@@ -42,7 +42,7 @@ pstack's "show the plan" and Antigravity's implementation plan are one artifact.
 | `run_in_background: true` | Omit. Subagents run concurrently; poll `manage_subagents`. |
 | `resume` | `send_message` to the running agent, or a fresh `invoke_subagent` with the earlier result in the prompt. |
 | `file_attachments` | List the paths in the prompt. |
-| A swarm, arena or gauntlet | Teamwork roles when the owner runs teamwork: `teamwork_worker`, `teamwork_reviewer`, `teamwork_challenger`, `teamwork_auditor`, `teamwork_explorer`. Brief each with `state.py agent <id> <role> --text ...` so its BRIEFING, progress and handoff land in the shared state. |
+| A swarm, arena or gauntlet | The owner's `/teamwork` when it is running: keep its roles (`teamwork_interviewer`, `teamwork_explorer`, `teamwork_worker`, `teamwork_reviewer`, `teamwork_challenger`, `teamwork_auditor`, `teamwork_victory_auditor`) and do not swap in pstack's swarm. The challenger runs only where iskandar-mode's risk rule calls for adversarial review. Brief each role with `state.py agent <id> <role> --text ...` so its BRIEFING, progress and handoff land in the shared state. |
 
 ## Models
 
