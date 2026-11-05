@@ -119,7 +119,9 @@ def grade(repo: Path, transcript, playbook, reviewer, source, tests) -> list:
               f"init at call {init_at}, first edit at {first_edit if first_edit < 10**9 else 'none'}")
         read_mode = any("iskandar-mode" in json.dumps(a) for _, a in calls)
         check(read_mode, "transcript: the iskandar-mode skill was read")
-        read_playbook = any(f"playbooks/{playbook}.md" in json.dumps(a) for _, a in calls) if playbook else True
+        # Windows paths arrive with backslashes (JSON-escaped); compare with / only.
+        read_playbook = any(f"playbooks/{playbook}.md" in json.dumps(a).replace("\\\\", "/").replace("\\", "/")
+                            for _, a in calls) if playbook else True
         check(read_playbook, "transcript: the playbook file was opened")
     return results
 

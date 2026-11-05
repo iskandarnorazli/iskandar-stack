@@ -89,6 +89,18 @@ class GraderTest(unittest.TestCase):
         self.assertTrue(r["transcript: state.py init was called"])
         self.assertFalse(r["transcript: state opened before the first source edit"])
 
+    def test_windows_playbook_path_counts_as_read(self):
+        # Found grading Antigravity's first run: it read playbooks\bug-fix.md, the grader looked for "/".
+        self.good_run()
+        t = Path(self.tmp.name) / "t.jsonl"
+        calls = [{"name": "run_command", "args": {"CommandLine": "python state.py init c --playbook bug-fix"}},
+                 {"name": "read_file", "args": {"Path": "C:\\Users\\x\\pstack\\skills\\poteto-mode\\playbooks\\bug-fix.md"}},
+                 {"name": "read_file", "args": {"Path": "C:\\x\\iskandar-mode\\SKILL.md"}}]
+        t.write_text("\n".join(json.dumps({"tool_calls": [c]}) for c in calls))
+        with redirect_stdout(io.StringIO()):
+            r = {w: ok for ok, w, _ in check_run.grade(self.repo, t, "bug-fix", None, None, None)}
+        self.assertTrue(r["transcript: the playbook file was opened"])
+
 
 if __name__ == "__main__":
     unittest.main()
