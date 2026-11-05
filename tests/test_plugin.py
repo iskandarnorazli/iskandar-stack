@@ -132,6 +132,15 @@ class PstackTest(unittest.TestCase):
         missing = [p for p in playbooks if short.get(p, p) not in mode]
         self.assertEqual(missing, [], "iskandar-mode must route every poteto-mode playbook")
 
+    def test_every_playbook_file_name_in_the_mode_exists(self):
+        mode = (ROOT / "src/skills/iskandar-mode/SKILL.md").read_text(encoding="utf-8")
+        listed = re.search(r"file name without `.md`: (.+?`audit-day`)", mode).group(1)
+        names = re.findall(r"`([a-z-]+)`", listed)
+        files = {p.stem for p in (PSTACK / "skills/poteto-mode/playbooks").glob("*.md")}
+        files |= {p.stem for p in (ROOT / "src/skills/iskandar-mode/playbooks").glob("*.md")}
+        self.assertEqual(sorted(set(names) - files), [])
+        self.assertEqual(sorted(files - set(names) - {"opening-a-pr"}), [], "a playbook file the mode does not list")
+
     def test_antigravity_adapter_covers_every_name_pstacks_claude_adapter_maps(self):
         cc = (PSTACK / "docs/harness/claude-code.md").read_text(encoding="utf-8")
         ag = (ROOT / "docs/harness/antigravity.md").read_text(encoding="utf-8")
@@ -172,8 +181,22 @@ class PstackTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as home:
             env = {**os.environ, "ISKANDAR_HOME": home}
             env.pop("PSTACK_ROOT", None)
+            env.pop("CLAUDE_CONFIG_DIR", None)
             r = subprocess.run([sys.executable, str(script)], env=env, capture_output=True, text=True)
             self.assertEqual(r.returncode, 1)
+
+    def test_pstack_root_follows_claude_config_dir_and_prefers_the_installed_copy(self):
+        # Found in the second Claude run: CLAUDE_CONFIG_DIR moved the plugins and pstack was "not found".
+        script = ROOT / "src/skills/iskandar-mode/scripts/pstack_root.py"
+        with tempfile.TemporaryDirectory() as home, tempfile.TemporaryDirectory() as cfg:
+            for rel in ("plugins/marketplaces/cursor-plugins/pstack", "plugins/cache/cursor-plugins/pstack/0.15.36"):
+                (Path(cfg) / rel / "skills/poteto-mode").mkdir(parents=True)
+                (Path(cfg) / rel / "skills/poteto-mode/SKILL.md").write_text("x", encoding="utf-8")
+            env = {**os.environ, "ISKANDAR_HOME": home, "CLAUDE_CONFIG_DIR": cfg}
+            env.pop("PSTACK_ROOT", None)
+            r = subprocess.run([sys.executable, str(script)], env=env, capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("plugins/cache/cursor-plugins/pstack", Path(r.stdout.strip()).as_posix())
 
 
 if __name__ == "__main__":

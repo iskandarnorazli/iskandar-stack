@@ -14,7 +14,7 @@ This mode routes work through pstack (Lauren Tan's poteto-mode playbooks, princi
 2. Read your harness adapter once: Antigravity `../../docs/harness/antigravity.md`; Claude Code `../../docs/harness/claude-code.md` and pstack's `<pstack>/docs/harness/claude-code.md`.
 3. Read the project's own rules (`CLAUDE.md`, `AGENTS.md`, `.agents/AGENTS.md`) and the skills they name. **Project rules win** over this mode and over pstack when they conflict. Name the conflict in the reply.
 4. `state.py status` (the **task-state** skill): if a task is open for you, resume it rather than starting over.
-5. For anything beyond a one-line edit, open the task state **before the first edit**: `init`, `plan`, the playbook's steps as tasks, `phase build`. Move the phase as the work moves (the task-state skill's "The order of work"). The other agent sees only what the state says.
+5. For anything beyond a one-line edit, open the task state **before the first edit** with the matched playbook: `state.py init <id> --playbook <name>` copies its steps in as tasks. Read the playbook file it names, then `plan` and `phase build`. Move the phase as the work moves (the task-state skill's "The order of work"). The other agent sees only what the state says.
 
 ## Non-negotiables
 
@@ -32,7 +32,7 @@ This mode routes work through pstack (Lauren Tan's poteto-mode playbooks, princi
 
 Match the task to a pstack playbook exactly as `<pstack>/skills/poteto-mode/SKILL.md` describes in its Playbooks section, and open the full steps at `<pstack>/skills/poteto-mode/playbooks/<file>.md`. Copy the steps verbatim into your to-do list and into the task state (`state.py task <id> add ...`). A step you skip stays with `skip: <reason>`.
 
-All of poteto-mode's playbooks apply: Investigation, Bug fix, Perf issue, Hillclimb, Runtime forensics, Trace forensics, Feature, Refactoring, Prototype, Visual parity, Authoring a skill, Eval, Babysit, Shipping, Autonomous run, Orchestrate, Autopilot-full, Autopilot-stack, Session pickup, Pause safely, Multi-phase plan, Worktree cleanup, and Opening a PR. Large or cross-cutting work routes to the **figure-it-out** skill. These playbooks, in this skill's `playbooks/` folder, come first when they fit:
+All of poteto-mode's playbooks apply: Investigation, Bug fix, Perf issue, Hillclimb, Runtime forensics, Trace forensics, Feature, Refactoring, Prototype, Visual parity, Authoring a skill, Eval, Babysit, Shipping, Autonomous run, Orchestrate, Autopilot-full, Autopilot-stack, Session pickup, Pause safely, Multi-phase plan, Worktree cleanup, and Opening a PR. Large or cross-cutting work routes to the **figure-it-out** skill. The `--playbook` name is the file name without `.md`: `investigation`, `bug-fix`, `perf-issue`, `hillclimb`, `runtime-forensics`, `trace-forensics`, `feature`, `refactoring`, `prototype`, `visual-parity`, `authoring-a-skill`, `eval`, `babysit`, `shipping`, `autonomous-run`, `orchestrate`, `autopilot-full`, `autopilot-stack`, `session-pickup`, `pause-safely`, `multi-phase-plan`, `worktree-cleanup`, `handoff`, `audit-day`. These playbooks, in this skill's `playbooks/` folder, come first when they fit:
 
 - **Handoff** (`playbooks/handoff.md`). Giving a task to the other agent, or taking one back.
 - **Audit day** (`playbooks/audit-day.md`). Reviewing a batch of the other agent's branches or issues, then refilling its queue.

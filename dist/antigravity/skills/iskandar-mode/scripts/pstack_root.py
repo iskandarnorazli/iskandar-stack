@@ -16,8 +16,10 @@ def candidates(home: Path):
     env = os.environ.get("PSTACK_ROOT")
     if env:
         yield Path(env)
+    claude_cfg = Path(os.environ["CLAUDE_CONFIG_DIR"]) if os.environ.get("CLAUDE_CONFIG_DIR") else home / ".claude"
     for base in (
-        home / ".claude" / "plugins",            # Claude Code (marketplace cache)
+        claude_cfg / "plugins" / "cache",         # Claude Code: installed plugins (checked first)
+        claude_cfg / "plugins",                   # Claude Code: marketplaces and synced plugins
         home / ".gemini" / "config" / "plugins",  # Antigravity
         home / ".cursor" / "plugins",             # Cursor
     ):
@@ -43,7 +45,13 @@ def find(home: Path):
     found = [c for c in candidates(home) if (c / MARK).exists()]
     if os.environ.get("PSTACK_ROOT") and found and found[0] == Path(os.environ["PSTACK_ROOT"]):
         return found[0]
-    return max(found, key=version) if found else None
+    # Highest version; at equal versions the first found wins (an installed copy before a
+    # marketplace checkout, whose skills still carry Cursor-only wording).
+    best = None
+    for c in found:
+        if best is None or version(c) > version(best):
+            best = c
+    return best
 
 
 def main() -> int:

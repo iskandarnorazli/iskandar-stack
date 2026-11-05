@@ -183,7 +183,7 @@ def chart(st: State, visited: set) -> str:
 
 
 def render(st: State, visited: set) -> str:
-    keys = ["id", "title", "owner", "phase", "previous", "builder", "branch", "created", "updated"]
+    keys = ["id", "title", "owner", "phase", "previous", "builder", "playbook", "branch", "created", "updated"]
     meta_lines = [f"{k}: {st.meta[k]}" for k in keys if st.meta.get(k)]
     meta_lines += [f"{k}: {v}" for k, v in st.meta.items() if k not in keys and v]
     parts = ["---", *meta_lines, "---", f"# {st.meta.get('title', st.id)}", ""]
@@ -257,6 +257,45 @@ def save(d: Path, st: State) -> None:
     with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)
     os.replace(tmp, d / "STATE.md")
+
+
+# ---------------------------------------------------------------- playbooks
+
+HERE = Path(__file__).resolve().parent
+STEP_RE = re.compile(r"^(\d+)\. (.+)$")
+
+
+def playbook_file(name: str) -> Path:
+    """iskandar-mode's own playbooks first, then pstack's (poteto-mode/playbooks)."""
+    ours = HERE.parent.parent / "iskandar-mode" / "playbooks" / f"{name}.md"
+    if ours.exists():
+        return ours
+    sys.path.insert(0, str(HERE.parent.parent / "iskandar-mode" / "scripts"))
+    try:
+        import pstack_root  # noqa: E402
+        root = pstack_root.find(Path(os.environ.get("ISKANDAR_HOME") or Path.home()))
+    except ImportError:
+        root = None
+    finally:
+        sys.path.pop(0)
+    if root is None:
+        raise StateError(f"playbook {name!r}: not an iskandar-mode playbook and pstack is not installed")
+    theirs = root / "skills" / "poteto-mode" / "playbooks" / f"{name}.md"
+    if not theirs.exists():
+        names = sorted(p.stem for p in theirs.parent.glob("*.md"))
+        raise StateError(f"no playbook {name!r}; pstack has: {', '.join(names)}")
+    return theirs
+
+
+def playbook_steps(path: Path) -> list:
+    """Each numbered step's first sentence, verbatim, as 'step N: ...'."""
+    steps = []
+    for line in path.read_text(encoding="utf-8").replace("\r\n", "\n").split("\n"):
+        m = STEP_RE.match(line)
+        if m:
+            first = re.split(r"(?<=[.!?])\s", m.group(2).strip(), maxsplit=1)[0]
+            steps.append(f"step {m.group(1)}: {first[:200]}")
+    return steps
 
 
 # ---------------------------------------------------------------- checks
@@ -339,11 +378,22 @@ def cmd_init(args) -> int:
         return 0
     if args.owner not in OWNERS:
         raise StateError(f"owner must be one of {', '.join(OWNERS)}")
+    pb = args.playbook.strip()
+    if pb.startswith("none"):
+        reason = pb.partition(":")[2].strip()
+        if not reason:
+            raise StateError("--playbook none needs a reason: --playbook 'none: <why no playbook fits>'")
+        name, tasks, source = "none", [], reason
+    else:
+        path = playbook_file(pb)
+        name, tasks, source = pb, [Task(t) for t in playbook_steps(path)], str(path)
     d.mkdir(parents=True, exist_ok=True)
     st = State(meta={"id": args.id, "title": args.title, "owner": args.owner, "phase": "plan",
-                     "branch": args.branch or "", "created": now()},
-               sections={"Goal": args.goal.strip()})
+                     "playbook": name, "branch": args.branch or "", "created": now()},
+               sections={"Goal": args.goal.strip()}, tasks=tasks)
     append_log(d, "plan", f"opened task {args.id}", args.goal, args.evidence or "", "open")
+    append_log(d, "plan", f"playbook {name}" + (f": {len(tasks)} steps copied" if tasks else ""),
+               "matched to the task" if name != "none" else source, source if name != "none" else "", "")
     save(d, st)
     print(d / "STATE.md")
     return 0
@@ -571,6 +621,9 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("init", help="open a task")
     s.add_argument("id"); s.add_argument("--title", required=True); s.add_argument("--goal", required=True)
     s.add_argument("--owner", default="claude"); s.add_argument("--branch"); s.add_argument("--evidence")
+    s.add_argument("--playbook", required=True,
+                   help="the matched playbook (bug-fix, feature, investigation, handoff, ...): its steps become the tasks; "
+                        "or 'none: <reason>'")
     s.set_defaults(fn=cmd_init)
 
     for name in ("plan", "walkthrough", "goal"):

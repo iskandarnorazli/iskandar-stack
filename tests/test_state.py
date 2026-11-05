@@ -46,7 +46,7 @@ class StateTestCase(unittest.TestCase):
         return state.read_log(self.tdir)
 
     def open_task(self, tasks=("write the failing test", "fix")):
-        self.run_cli("init", "t1", "--title", "Fix cache test", "--goal", "CI stays green with AWAN_CACHE_DIR set")
+        self.run_cli("init", "t1", "--title", "Fix cache test", "--goal", "CI stays green with AWAN_CACHE_DIR set", "--playbook", "none: test")
         self.run_cli("plan", "t1", "--text", "## Proposed Changes\n#### [MODIFY] tests/x.rs")
         self.run_cli("task", "t1", "add", *tasks)
 
@@ -65,21 +65,22 @@ class InitTest(StateTestCase):
         sub = self.repo / "a" / "b"
         sub.mkdir(parents=True)
         os.chdir(sub)
-        self.run_cli("init", "t1", "--title", "T", "--goal", "G")
+        self.run_cli("init", "t1", "--title", "T", "--goal", "G", "--playbook", "none: test")
         self.assertTrue((self.tdir / "STATE.md").exists())
         self.assertEqual(self.log_rows()[0]["decision"], "opened task t1")
+        self.assertIn("playbook: none", self.text())
         self.assertIn("phase: plan", self.text())
         self.assertIn("```mermaid", self.text())
 
     def test_init_twice_keeps_the_first(self):
-        self.run_cli("init", "t1", "--title", "T", "--goal", "first")
-        _, out, _ = self.run_cli("init", "t1", "--title", "T", "--goal", "second")
+        self.run_cli("init", "t1", "--title", "T", "--goal", "first", "--playbook", "none: test")
+        _, out, _ = self.run_cli("init", "t1", "--title", "T", "--goal", "second", "--playbook", "none: test")
         self.assertIn("exists", out)
         self.assertIn("first", self.text())
-        self.assertEqual(len(self.log_rows()), 1)
+        self.assertEqual(len(self.log_rows()), 2)
 
     def test_bad_id_is_refused(self):
-        code, _, err = self.run_cli("init", "Bad Id", "--title", "T", "--goal", "G", ok=False)
+        code, _, err = self.run_cli("init", "Bad Id", "--title", "T", "--goal", "G", "--playbook", "none: x", ok=False)
         self.assertEqual(code, 2)
         self.assertIn("bad task id", err)
 
@@ -87,10 +88,49 @@ class InitTest(StateTestCase):
         other = self.repo / "elsewhere"
         os.environ["ISKANDAR_STATE_DIR"] = str(other)
         try:
-            self.run_cli("init", "t1", "--title", "T", "--goal", "G")
+            self.run_cli("init", "t1", "--title", "T", "--goal", "G", "--playbook", "none: test")
         finally:
             os.environ.pop("ISKANDAR_STATE_DIR")
         self.assertTrue((other / "t1" / "STATE.md").exists())
+
+
+class PlaybookTest(StateTestCase):
+    # Found in the third Claude run: pstack was found but its Bug fix playbook was never opened.
+    def test_init_copies_the_playbook_steps_as_tasks(self):
+        self.run_cli("init", "t1", "--title", "T", "--goal", "G", "--playbook", "handoff")
+        t = self.text()
+        self.assertIn("playbook: handoff", t)
+        self.assertIn("- [ ] step 1: Open or update the task state (the **task-state** skill).", t)
+        self.assertIn("- [ ] step 8: The reviewer, never the builder", t)
+        self.assertIn("playbook handoff: 8 steps copied", self.log_rows()[1]["decision"])
+
+    def test_init_needs_a_playbook_or_a_reason(self):
+        code, _, err = self.run_cli("init", "t1", "--title", "T", "--goal", "G", "--playbook", "none", ok=False)
+        self.assertEqual(code, 2)
+        self.assertIn("needs a reason", err)
+        self.assertFalse(self.tdir.exists())
+        with self.assertRaises(SystemExit):
+            with redirect_stderr(io.StringIO()):
+                state.main(["init", "t1", "--title", "T", "--goal", "G"])
+
+    def test_unknown_playbook_lists_what_exists(self):
+        os.environ["ISKANDAR_HOME"] = str(self.repo)  # no pstack here
+        try:
+            code, _, err = self.run_cli("init", "t1", "--title", "T", "--goal", "G", "--playbook", "bugfix", ok=False)
+        finally:
+            os.environ.pop("ISKANDAR_HOME")
+        self.assertIn("pstack is not installed", err)
+
+    @unittest.skipUnless((ROOT / ".cache/cursor-plugins/harness/pstack/claude-code").exists(), "pstack not fetched")
+    def test_pstack_playbook(self):
+        os.environ["PSTACK_ROOT"] = str(ROOT / ".cache/cursor-plugins/harness/pstack/claude-code")
+        try:
+            self.run_cli("init", "t1", "--title", "T", "--goal", "G", "--playbook", "bug-fix")
+        finally:
+            os.environ.pop("PSTACK_ROOT")
+        t = self.text()
+        self.assertIn("- [ ] step 1: Reproduce it yourself on the matching surface", t)
+        self.assertIn("- [ ] step 6: Run **Opening a PR**.", t)
 
 
 class LifecycleTest(StateTestCase):
@@ -99,11 +139,11 @@ class LifecycleTest(StateTestCase):
         self.run_cli("phase", "t1", "done", "--reason", "audited", "--by", "antigravity")
         self.assertIn("phase: done", self.text())
         phases = [r["phase"] for r in self.log_rows()]
-        self.assertEqual(phases, ["plan", "build", "verify", "review", "done"])
+        self.assertEqual(phases, ["plan", "plan", "build", "verify", "review", "done"])
         self.assertEqual(self.run_cli("check", "t1", "--quiet")[0], 0)
 
     def test_leaving_plan_needs_a_plan_and_tasks(self):
-        self.run_cli("init", "t1", "--title", "T", "--goal", "G")
+        self.run_cli("init", "t1", "--title", "T", "--goal", "G", "--playbook", "none: test")
         code, _, err = self.run_cli("phase", "t1", "build", "--reason", "go", ok=False)
         self.assertEqual(code, 2)
         self.assertIn("Plan section", err)
@@ -241,7 +281,7 @@ class TasksAndChecksTest(StateTestCase):
 
     def test_status_lists_open_tasks_by_owner(self):
         self.open_task()
-        self.run_cli("init", "t2", "--title", "Other", "--goal", "G", "--owner", "antigravity")
+        self.run_cli("init", "t2", "--title", "Other", "--goal", "G", "--owner", "antigravity", "--playbook", "none: test")
         _, out, _ = self.run_cli("status", "--brief", "--owner", "antigravity")
         self.assertIn("t2", out)
         self.assertNotIn("t1 ", out)

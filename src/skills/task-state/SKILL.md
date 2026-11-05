@@ -60,7 +60,7 @@ The builder never closes its own work. Claude reviews Antigravity's and Antigrav
 
 The state follows the work as it happens, not afterwards. A state opened after the fix, still in `plan`, says the work was never built.
 
-1. `init`, then `plan` and `task add` with the matched playbook's steps, **before the first edit**.
+1. `init --playbook <name>` **before the first edit**: it copies the playbook's steps in as tasks. Then `plan`, and `task add` for the task-specific steps.
 2. `phase build` before you edit. Tick tasks as each one is done.
 3. `phase verify` when the change is in; run the gate; `walkthrough` with the commands and their output.
 4. `phase review`, then hand the review to someone else: `handoff --for review`.
@@ -68,7 +68,8 @@ The state follows the work as it happens, not afterwards. A state opened after t
 ## Commands
 
 ```sh
-state.py init <id> --title "..." --goal "<the owner's goal in their words>" [--owner claude|antigravity|human] [--branch b]
+state.py init <id> --title "..." --goal "<the owner's goal in their words>" --playbook bug-fix [--owner claude|antigravity|human] [--branch b]
+                                           # the playbook's steps become the tasks; or --playbook "none: <reason>"
 state.py plan <id> --file plan.md          # or --text "..."
 state.py task <id> add "write the failing test" "fix" "run the gate"
 state.py task <id> done 1 | skip 3 --reason "LINUX_CI off" | undo 2
@@ -103,7 +104,7 @@ Use `###` and deeper inside the Plan. The script splits the file at its own `##`
 
 ## Tasks
 
-Copy the matched playbook's steps in as tasks, verbatim, then the task-specific ones. A step you choose not to do is skipped with a reason, never deleted. Keep the agent's own to-do list (`TaskCreate`, the Antigravity task artifact) in step with it; the state file is what the other agent reads.
+`init --playbook` copies the matched playbook's steps in as tasks (each step's first sentence; open the playbook file for the rest), then add the task-specific ones. A step you choose not to do is skipped with a reason, never deleted. Keep the agent's own to-do list (`TaskCreate`, the Antigravity task artifact) in step with it; the state file is what the other agent reads.
 
 ## The decision log
 
