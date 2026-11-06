@@ -16,6 +16,8 @@ One task, one folder, whichever agent holds it. The folder is the handoff: an ag
 
 Change it with the script, not by hand, so the gates run and the chart stays current: `python <this skill>/scripts/state.py <command>` (`python3` on Linux). Hand edits are tolerated; run `state.py check` after one.
 
+When the repository is on another machine than the skill (a cloud session working on a linked computer), copy `scripts/state.py` into the repository's `.tmp/tools/` with the device file tool and check its md5, or init with `--playbook "none: <reason>"` and add the playbook's steps with `task add`. Decide within one or two calls.
+
 In Antigravity, read `../../docs/harness/antigravity.md` once per session. In Claude Code, read `../../docs/harness/claude-code.md`.
 
 ## When
@@ -108,7 +110,7 @@ Use `###` and deeper inside the Plan. The script splits the file at its own `##`
 
 ## The decision log
 
-`DECISIONS.tsv` is pstack's show-me-your-work log; read `<pstack>/skills/show-me-your-work/SKILL.md` for what earns a row. The script writes a row for each phase move, skip and handoff. Add a row for each fork chosen, revert, blocker, and measured number (with the command that produced it). Append only: a wrong row gets a new row that supersedes it. `resume` writes the `start` row that names the rows other runs wrote.
+`DECISIONS.tsv` is pstack's show-me-your-work log; read `<pstack>/skills/show-me-your-work/SKILL.md` for what earns a row. The script writes a row for each phase move, skip and handoff. Add a row for each fork chosen, revert, blocker, and measured number (with the command that produced it). When you decide *not* to do something because it is unsafe in this setup, log that at once with the reason: summaries and compaction keep what was done, not what was avoided. Append only: a wrong row gets a new row that supersedes it. `resume` writes the `start` row that names the rows other runs wrote.
 
 ## Drawing state
 
