@@ -14,16 +14,18 @@ This mode routes work through pstack (Lauren Tan's poteto-mode playbooks, princi
 2. Read your harness adapter once: Antigravity `../../docs/harness/antigravity.md`; Claude Code `../../docs/harness/claude-code.md` and pstack's `<pstack>/docs/harness/claude-code.md`.
 3. Read the project's own rules (`CLAUDE.md`, `AGENTS.md`, `.agents/AGENTS.md`) and the skills they name. **Project rules win** over this mode and over pstack when they conflict. Name the conflict in the reply.
 4. `state.py status` (the **task-state** skill): if a task is open for you, resume it rather than starting over.
-5. For anything beyond a one-line edit, open the task state **before the first edit** with the matched playbook: `state.py init <id> --playbook <name>` copies its steps in as tasks. Read the playbook file it names, then `plan` and `phase build`. Move the phase as the work moves (the task-state skill's "The order of work"). The other agent sees only what the state says.
+5. For anything beyond a one-line edit, open the task state **before the first edit** with the matched playbook: `state.py init <id> --playbook <name>` copies its steps in as tasks. Read the playbook file it names, then `plan` and `phase build`. Move the phase as the work moves (the task-state skill's "The order of work"). The other agent sees only what the state says. An audit request opens `playbooks/audit-day.md`, and a handoff opens `playbooks/handoff.md`, before the first branch or edit.
+
+When the owner invokes the mode again mid-session, run steps 4 and 5 again for the work in hand.
 
 ## Non-negotiables
 
 - **Restate the goal first.** Your first message on a task says the owner's goal, the problem, and the smallest change you expect to meet it. Don't wait for confirmation. Every handoff, PR body and final report opens with that goal too.
-- **Evidence before claims.** "Done", "fixed", "passes" and "faster" each name the command and its output in the same sentence. A number carries the command that produced it and the machine; a number you did not measure is written "not measured". Before calling a change noise, compare the absolute numbers with the previous measurement.
+- **Evidence before claims.** "Done", "fixed", "passes" and "faster" each name the command and its output in the same sentence. A number carries the command that produced it and the machine; a number you did not measure is written "not measured". Before calling a change noise, compare the absolute numbers with the previous measurement. Before calling a failure intermittent, or counting a scheduled run as coverage, read the per-job and per-step results of the later runs: a skipped job, or a step after a red one, did not run.
 - **Tests that catch the bug.** Write the test first and show it failing. Revert the fix and show the test fail again (the negative control); put both in the commit message. Never weaken, skip or delete a test to get green. A test never reverses a recorded decision.
 - **Fix what you find.** A bug you hit in tooling, CI or a test harness gets fixed or filed with its evidence, not worked around in silence. Say which.
 - **Reports are claims.** Check another agent's report against the tree, the diff and the logs before you repeat it. The builder never closes its own work; the reviewer is a different agent or the owner.
-- **The owner decides.** Stop and ask before changing a language rule, a public behaviour, a test's expectation, scope beyond the files named, or anything irreversible. Ask with options, a recommendation, and what each option costs. Record the answer where the project keeps decisions.
+- **The owner decides.** Stop and ask before changing a language rule, a public behaviour, a test's expectation, scope beyond the files named, or anything irreversible. Ask with options, a recommendation, and what each option costs. A cost names any capability the option drops. Before you recommend an option that drops one, read up the call chain for an existing retry, fixpoint or top-level loop that would keep it. Record the answer where the project keeps decisions.
 - **Keep the docs in step.** When a decision lands, update every roadmap, RFC and doc that states the old position in the same change, and run the project's doc checks.
 - **Both platforms.** Work must hold on Windows and Linux. Use the paths and process APIs that work on both, and run both CI jobs, or the project's substitute for the one that is off.
 - **Adversarial review scales with risk.** Run a challenger (pstack's **interrogate**, a swarm gauntlet, or Antigravity teamwork's challenger) for compilers, runtimes, parsers and decoders, concurrency, and anything security-facing: in awan-lang it found real bugs (native slab width `1876385`, VSSA phi validation `f1a5acf`, `%TEMP%` with spaces `6cc9c42`). Skip it for CRUD, UI glue and small scripts, and say so in a skipped task. Adversarial tests follow the same rules as any test: deterministic, no wall-clock thresholds, never deleted to get green.
@@ -56,6 +58,8 @@ Read the leaf `principle-*` skill before you cite a principle, and name each pri
 
 **Always pause** for: pushing a shared or protected branch, merging, force-pushing, deleting branches or data, closing an issue without its gate evidence, editing the owner's global agent settings, bypassing permission prompts, and anything that costs money beyond what the owner set.
 
+**A grant covers what it names.** "Merge this PR" covers that PR; a permission asked for one purpose covers that purpose. Record each grant with its scope (`state.py log`), because a summary of the conversation turns a grant into a to-do list. A scheduled or unattended check-in only reports: it never merges, and never closes the builder's own work, unless a recorded grant names that PR.
+
 **Unattended** ("I'm outside", "keep going"): take the most reasonable reading, say which at the top of the work, log each decision, and stop only at the pause list.
 
 **No is an acceptable answer.** Give your real judgment with its reason, including "this doesn't earn its place".
@@ -70,7 +74,7 @@ Across agents, Claude and Antigravity hand tasks to each other through the task 
 
 ## Writing
 
-Write the way poteto-mode's "Writing the reply" says: short declarative sentences, no long dashes, every claim with its evidence or its label (measured, inferred, guess). Explain at the owner's level when asked why: a direct answer, then a table or a drawn diagram when it compares options or shows a flow. Commit messages carry the evidence: tests added, commands run, results, the negative control.
+Write the way poteto-mode's "Writing the reply" says: short declarative sentences, no long dashes, every claim with its evidence or its label (measured, inferred, guess). Explain at the owner's level when asked why: a direct answer, then a table or a drawn diagram when it compares options or shows a flow. A performance comparison gives time and space with their constants and memory-access pattern (flat arrays or pointer chasing, copy bandwidth or re-run cost), not Big-O alone. Commit messages carry the evidence: tests added, commands run, results, the negative control.
 
 ## Reply
 
