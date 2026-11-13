@@ -10,6 +10,7 @@
    - the files in scope and the files and behaviours that must not change;
    - the steps as constraints, not a mechanism, unless a mechanism was decided;
    - the gate, as commands with their expected output and where the evidence goes;
+   - when the goal is a number (throughput, latency, memory, size), the gate is that number, produced by a named command on a named machine, with the before value recorded where the evidence goes. A pointer check, a flag check or any code-shape test can be an extra per-PR guard, never the gate;
    - the stop conditions: a language rule change, a test expectation change, a file outside the list, or a gate that cannot be met as written.
 3. Check that no other agent holds the work: the project's claim labels (`wip:claude`, `wip:antigravity`) and `state.py status`. Claim it for the receiver.
 4. A handoff for review needs the task in `review`: tasks closed, Walkthrough written, `phase review` run. The script refuses it otherwise.
