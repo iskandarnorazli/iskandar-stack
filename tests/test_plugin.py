@@ -109,6 +109,15 @@ class BuildTest(unittest.TestCase):
             r = subprocess.run(cmd, shell=True, cwd=t, capture_output=True, text=True)
         self.assertEqual((r.returncode, r.stdout, r.stderr), (0, "", ""))
 
+    def test_claude_hook_refuses_an_attributed_commit_and_passes_a_clean_one(self):
+        hook = json.loads((ROOT / "dist/claude-code/hooks/hooks.json").read_text(encoding="utf-8"))
+        entry = hook["hooks"]["PreToolUse"][0]
+        self.assertEqual(entry["matcher"], "Bash")
+        cmd = entry["hooks"][0]["command"].replace("${CLAUDE_PLUGIN_ROOT}", str(ROOT / "dist/claude-code")).replace("python3", sys.executable)
+        for command, code in (('git commit -m "x\n\nCo-Authored-By: Claude <noreply@anthropic.com>"', 2), ('git commit -m "x"', 0)):
+            r = subprocess.run(cmd, shell=True, input=json.dumps({"tool_name": "Bash", "tool_input": {"command": command}}), capture_output=True, text=True)
+            self.assertEqual(r.returncode, code, (command, r.stderr))
+
 
 @unittest.skipUnless(HAVE_PSTACK, "pstack not fetched: python3 scripts/fetch_pstack.py")
 class PstackTest(unittest.TestCase):

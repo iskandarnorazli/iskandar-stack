@@ -7,7 +7,8 @@
       <home>/.gemini/config/plugins/ and enables them in config.json (backed up first).
   install.py claude-project <repo>
       Make Claude Code sessions in <repo> load both plugins: merges
-      extraKnownMarketplaces and enabledPlugins into <repo>/.claude/settings.json.
+      extraKnownMarketplaces and enabledPlugins into <repo>/.claude/settings.json, and sets
+      attribution so Claude Code adds no commit trailer, PR-body line or session link.
   install.py claude-user
       `claude plugin marketplace add` + `claude plugin install` for this machine's Claude Code.
 
@@ -99,11 +100,16 @@ def install_antigravity(home: Path, force_copy: bool) -> int:
     return 0
 
 
+ATTRIBUTION = {"commit": "", "pr": "", "sessionUrl": False}
+
+
 def install_claude_project(repo: Path) -> int:
     p = repo / ".claude" / "settings.json"
     data = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
     data.setdefault("extraKnownMarketplaces", {}).update(MARKETPLACES)
     data.setdefault("enabledPlugins", {}).update(PLUGINS)
+    # No AI attribution (owner, 2026-11-20): no commit trailer, no PR-body line, no session link.
+    data.setdefault("attribution", {}).update(ATTRIBUTION)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {p}")

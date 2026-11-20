@@ -54,6 +54,8 @@ class ClaudeProjectInstallTest(unittest.TestCase):
             self.assertEqual(data["enabledPlugins"],
                              {"other@x": True, "pstack@cursor-plugins": True, "iskandar-stack@iskandar-stack": True})
             self.assertEqual(data["extraKnownMarketplaces"]["cursor-plugins"]["source"]["repo"], "cursor/plugins")
+            # No AI attribution (owner, 2026-11-20): no trailer, no PR-body line, no session link.
+            self.assertEqual(data["attribution"], {"commit": "", "pr": "", "sessionUrl": False})
 
 
 if __name__ == "__main__":
