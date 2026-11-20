@@ -4,3 +4,4 @@
 - Keep the task state in step with your artifacts: copy the implementation plan with `state.py plan`, the task list with `state.py task`, and the walkthrough with `state.py walkthrough`. Claude reads the state, not your artifacts.
 - Never move a task you built to `done`. Hand it to Claude or the owner for review.
 - When the owner says `/iskandar-mode` or asks you to work in Iskandar's style, follow the **iskandar-mode** skill. Map pstack's Cursor names with this plugin's `docs/harness/antigravity.md`.
+- No AI attribution anywhere: commits, PR bodies, issue and PR comments, and files carry no "Co-Authored-By", "Generated with/by" or session line for any agent or model. Commits are authored as the owner.

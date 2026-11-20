@@ -92,10 +92,17 @@ def build(out: Path) -> None:
         man = json.dumps(manifest(harness), indent=2) + "\n"
         if harness == "claude-code":
             write(d / ".claude-plugin" / "plugin.json", man)
-            hooks = {"hooks": {"SessionStart": [{"hooks": [{
-                "type": "command",
-                "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skills/task-state/scripts/state.py\" status --brief --quiet || true",
-            }]}]}}
+            hooks = {"hooks": {
+                "SessionStart": [{"hooks": [{
+                    "type": "command",
+                    "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skills/task-state/scripts/state.py\" status --brief --quiet || true",
+                }]}],
+                # No AI attribution in commits or GitHub writes (owner, 2026-11-20).
+                "PreToolUse": [{"matcher": "Bash", "hooks": [{
+                    "type": "command",
+                    "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skills/iskandar-mode/scripts/no_attribution.py\"",
+                }]}],
+            }}
             write(d / "hooks" / "hooks.json", json.dumps(hooks, indent=2) + "\n")
         else:
             write(d / "plugin.json", man)
